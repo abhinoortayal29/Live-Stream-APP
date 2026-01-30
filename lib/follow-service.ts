@@ -4,6 +4,10 @@ import { getSelf } from "@/lib/auth-service";
 export const getFollwedUser = async () => {
   try {
     const self = await getSelf();
+    
+    if (!self) {
+      return [];
+    }
 
     const followedUsers = await db.follow.findMany({
       where: {
@@ -19,7 +23,7 @@ export const getFollwedUser = async () => {
       include: {
         following: {
           include: {
-            stream: true, // Changed from select: { isLive: true } to true
+            stream: true,
           },
         },
       },
@@ -34,6 +38,10 @@ export const getFollwedUser = async () => {
 export const isFollowingUser = async (id: string) => {
   try {
     const self = await getSelf();
+    
+    if (!self) {
+      return false;
+    }
 
     const otherUser = await db.user.findUnique({
       where: { id },
@@ -58,6 +66,10 @@ export const isFollowingUser = async (id: string) => {
 
 export const followUser = async (id: string) => {
   const self = await getSelf();
+  
+  if (!self) {
+    throw new Error("Unauthorized");
+  }
 
   const otherUser = await db.user.findUnique({
     where: { id },
@@ -92,6 +104,10 @@ export const followUser = async (id: string) => {
 
 export const unfollowUser = async (id: string) => {
   const self = await getSelf();
+  
+  if (!self) {
+    throw new Error("Unauthorized");
+  }
 
   const otherUser = await db.user.findUnique({
     where: { id },

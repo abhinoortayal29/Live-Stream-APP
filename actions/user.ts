@@ -8,6 +8,10 @@ import { db } from "@/lib/db";
 
 export const updateUser = async (values: Partial<User>) => {
   const self = await getSelf();
+  
+  if (!self) {
+    throw new Error("Unauthorized");
+  }
 
   const validData = {
     bio: values.bio,

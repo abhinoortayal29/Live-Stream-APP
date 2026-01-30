@@ -25,7 +25,7 @@ interface UserAvatarProps extends VariantProps<typeof avatarSizes> {
   showBadge?: boolean;
 }
 
-interface UserAvatarSkeletonProps extends VariantProps<typeof avatarSizes> {}
+type UserAvatarSkeletonProps = VariantProps<typeof avatarSizes>;
 
 export function UserAvatar({
   imageUrl,

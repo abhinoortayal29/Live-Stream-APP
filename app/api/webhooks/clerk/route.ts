@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
    
     const eventType = evt.type;
-    const payload: any = evt.data; // payload shape depends on Clerk event
+    const payload = evt.data as Record<string, any>; // payload shape depends on Clerk event
 
     console.log(`Received webhook: type=${eventType}, id=${payload?.id}`);
 
