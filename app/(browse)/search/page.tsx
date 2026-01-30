@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Results,ResultsSkeleton } from "./_components/results";
+import { Results, ResultsSkeleton } from "./_components/results";
 
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: { term?: string };
+  searchParams: Promise<{ term?: string }>;
 }) {
   const params = await searchParams;
 
