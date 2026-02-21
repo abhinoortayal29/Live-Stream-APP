@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
             imageUrl: payload.image_url ?? existing.imageUrl,
             stream:{
               create:{
-                name:`${payload.data.usernae} 's stream`,
+                name:`${payload.username ?? "User"}'s stream`,
               }
             }
           },
