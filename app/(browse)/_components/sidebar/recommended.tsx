@@ -14,6 +14,10 @@ export function Recommended({
 }) {
   const { collapsed } = useSidebar((state) => state);
 
+  // 🔥 DEBUG: check component + data
+  console.log("Recommended rendered");
+  console.log("DATA:", data);
+
   const showLabel = !collapsed && data.length > 0;
 
   return (
@@ -23,15 +27,21 @@ export function Recommended({
           <p className="text-xs text-muted-foreground">Recommended</p>
         </div>
       )}
+
       <ul className="space-y-2 px-2">
-        {data.map((user) => (
-          <UserItem
-            key={user.id}
-            imageUrl={user.imageUrl}
-            username={user.username}
-            isLive={user.stream?.isLive}
-          />
-        ))}
+        {data.map((user) => {
+          // 🔥 DEBUG: each user
+          console.log("USER:", user.username, user.stream);
+
+          return (
+            <UserItem
+              key={user.id}
+              imageUrl={user.imageUrl}
+              username={user.username}
+              isLive={user.stream?.isLive ?? false}
+            />
+          );
+        })}
       </ul>
     </div>
   );

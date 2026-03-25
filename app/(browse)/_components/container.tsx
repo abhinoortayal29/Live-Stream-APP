@@ -9,7 +9,7 @@ interface ContainerProps {
 }
 
 export const Container = ({ children }: ContainerProps) => {
-      //check size of screen auto collapse if in mobile mode 
+      
   const matches = useMediaQuery("(max-width:1024px)");
   const { collapsed, onCollapse, onExpand } = useSidebar((s) => s);
 

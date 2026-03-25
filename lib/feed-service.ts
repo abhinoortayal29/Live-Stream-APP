@@ -1,12 +1,15 @@
 import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
 
+//get stream like des live then other if blocked chekc also if wihtout log in show all 
+
 export const getStreams = async () => {
   let userId = null;
 
   try {
     const self = await getSelf();
     if (self) {
+      //database id 
       userId = self.id;
     }
   } catch {
@@ -37,6 +40,7 @@ export const getStreams = async () => {
       },
       orderBy: [{ isLive: "desc" }, { updatedAt: "desc" }],
     });
+    // for user without log in 
   } else {
     streams = await db.stream.findMany({
       select: {

@@ -1,5 +1,12 @@
 "use server";
 
+// Finds current logged-in user
+
+// Finds their stream
+
+// Updates only the fields that changed
+
+// Refreshes UI pages
 import { Stream } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 

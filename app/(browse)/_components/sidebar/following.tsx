@@ -33,7 +33,7 @@ export function Following({
             key={follow.following.id}
             username={follow.following.username}
             imageUrl={follow.following.imageUrl}
-            isLive={follow.following.stream?.isLive}
+            isLive={follow.following.stream?.isLive ?? false}
           />
         ))}
       </ul>

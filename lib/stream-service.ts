@@ -4,18 +4,7 @@ export const getStreamByUserId = async (userId: string) => {
         where: { userId },
       });
     
-      if (!stream) {
-        stream = await db.stream.create({
-          data: {
-            userId,
-            name: "My Stream",
-            isChatEnabled: true,
-            isChatDelayed: false,
-            isChatFollowersOnly: false,
-          },
-        });
-      }
-    
+      
       return stream;
     };
     

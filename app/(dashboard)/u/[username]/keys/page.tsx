@@ -1,19 +1,14 @@
 import React from "react";
-
 import { getSelf } from "@/lib/auth-service";
 import { getStreamByUserId } from "@/lib/stream-service";
-
 import { URLCard } from "./_components/url-card";
 import { KeyCard } from "./_components/key-card";
-
 import { ConnectModal } from "./_components/connect-modal";
 
 export default async function KeysPage() {
   const self = await getSelf();
-  if(!self) return false;
+  if(!self) return null;
   const stream = await getStreamByUserId(self.id);
-
-  
 
   if (!stream) {
     throw new Error("No stream found");

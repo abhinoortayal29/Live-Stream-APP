@@ -1,4 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
+export const runtime = "nodejs";
 import { getSelf } from "@/lib/auth-service";
 import { db } from "@/lib/db";
 
@@ -27,3 +28,4 @@ export const ourFileRouter = {
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
+// chexk log in or not then return url 

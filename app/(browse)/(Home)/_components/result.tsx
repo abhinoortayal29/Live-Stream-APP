@@ -18,6 +18,7 @@ export async function Results() {
       )}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {data.map((result) => (
+          // if i remove key as it is not used in result casrd it show Each child in a list should have a unique "key" prop. 
           <ResultCard key={result.id} data={result} />
         ))}
       </div>

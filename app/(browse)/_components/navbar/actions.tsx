@@ -8,7 +8,7 @@ import { getSelf } from "@/lib/auth-service";
 export const Actions = async () => {
   const user = await currentUser();
 
-  // Get user from YOUR database
+  
   const dbUser = user ? await getSelf() : null;
 
   return (

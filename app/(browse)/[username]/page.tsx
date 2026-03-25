@@ -12,16 +12,20 @@ interface UserPageProps {
 export async function generateMetadata({ params }: UserPageProps) {
   const { username } = await params;
   return {
-    title: username,
-  };
+  title: `${username} Live Stream | StreamApp`,
+  description: `Watch ${username}'s live stream and chat in real time.`,
+};
 }
 
 export default async function UserPage({ params }: UserPageProps) {
   const { username } = await params;
   const user = await getUserByUsername(username);
 
+  // sometimes it had deleted it account
+
   if (!user || !user.stream) notFound();
 
+  
   const isFollowing = await isFollowingUser(user.id);
   const isBlocked = await isBlockedByUser(user.id);
 

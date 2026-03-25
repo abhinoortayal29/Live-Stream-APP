@@ -4,7 +4,6 @@ import { getSelf } from "@/lib/auth-service";
 export const getRecommended = async () => {
   const self = await getSelf();
 
-  // 🔓 Logged-out users
   if (!self) {
     return db.user.findMany({
       include: {
@@ -15,20 +14,17 @@ export const getRecommended = async () => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        stream: {
+          isLive: "desc",
+        },
       },
     });
   }
 
-  // 🔐 Logged-in users
   return db.user.findMany({
     where: {
       AND: [
-        {
-          NOT: {
-            id: self.id,
-          },
-        },
+        { NOT: { id: self.id } },
         {
           NOT: {
             followedBy: {
@@ -57,7 +53,9 @@ export const getRecommended = async () => {
       },
     },
     orderBy: {
-      createdAt: "desc",
+      stream: {
+        isLive: "desc",
+      },
     },
   });
 };

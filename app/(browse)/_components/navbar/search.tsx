@@ -28,7 +28,10 @@ export function Search() {
     router.push(url);
   };
 
-  const onClear = () => setValue("");
+  const onClear = () => {
+    setValue("");
+    router.push("/");
+  };
 
   return (
     <form

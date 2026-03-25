@@ -1,3 +1,4 @@
+
 import { Sidebar, SidebarSkeleton } from "./_components/sidebar";
 import { Navbar } from "./_components/navbar";
 import { Container } from "./_components/container";
@@ -9,7 +10,6 @@ const BrowseLayout = ({ children }: { children: React.ReactNode }) => {
     <>
       <Navbar />
 
-      {/* Sidebar + main content */}
       <div className="flex min-h-screen">
         <Suspense fallback={<SidebarSkeleton/>}>
           <Sidebar />

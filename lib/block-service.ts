@@ -70,11 +70,10 @@ export const unblockUser = async (id: string) => {
   if(!self ) return false;
 
   if (self.id === id) throw new Error("Cannot unblock yourself");
-
   const otherUser = await db.user.findUnique({
     where: { id },
   });
-
+  
   if (!otherUser) throw new Error("User not found");
 
   const existingBlock = await db.block.findUnique({

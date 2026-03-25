@@ -27,7 +27,7 @@ export function ToggleCard({
   const router = useRouter();
 
   const onChange = (next: boolean) => {
-    setChecked(next); // ✅ UI updates instantly
+    setChecked(next); 
 
     startTransition(() => {
       updateStream({ [field]: next })

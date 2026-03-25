@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
 
+// List of users you follow + their streams 
 export const getFollwedUser = async () => {
   try {
     const self = await getSelf();
@@ -34,7 +35,7 @@ export const getFollwedUser = async () => {
     return [];
   }
 };
-
+// is i follow this given streamer 
 export const isFollowingUser = async (id: string) => {
   try {
     const self = await getSelf();
@@ -48,7 +49,7 @@ export const isFollowingUser = async (id: string) => {
     });
 
     if (!otherUser) throw new Error("User not found");
-
+    // for hiding button follow
     if (otherUser.id === self.id) return true;
 
     const existingFollow = await db.follow.findFirst({
@@ -63,6 +64,7 @@ export const isFollowingUser = async (id: string) => {
     return false;
   }
 };
+// follow ad ufoolow and luniquness for prevent race cosniont
 
 export const followUser = async (id: string) => {
   const self = await getSelf();
