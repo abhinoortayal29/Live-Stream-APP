@@ -16,7 +16,6 @@ import { ChatForm, ChatFormSkeleton } from "./chat-form";
 import { ChatList, ChatListSkeleton } from "./chat-list";
 import { ChatCommunity } from "./chat-community";
 
-// Raw shape returned from your DB API
 interface DbMessage {
   id: string;
   text: string;
@@ -25,13 +24,10 @@ interface DbMessage {
   createdAt: string;
 }
 
-// ✅ Single unified type used for ALL messages after normalization.
-// Neither DB messages nor LiveKit messages are used directly —
-// both are mapped into this shape, avoiding any Participant type conflicts.
 export interface UnifiedMessage {
   id: string;
   message: string;
-  senderName: string;   // always a plain string — no Participant needed
+  senderName: string;
   timestamp: number;
   source: "db" | "livekit";
 }
@@ -78,13 +74,10 @@ export function Chat({
       const data = await res.json();
       setDbMessages(Array.isArray(data) ? data : []);
     };
-
     fetchMessages();
   }, [hostIdentity]);
 
   const reversedMessages = useMemo((): UnifiedMessage[] => {
-    // ✅ Normalize DB messages → UnifiedMessage
-    // m.userName is a plain string, stored directly as senderName.
     const normalizedDb: UnifiedMessage[] = dbMessages.map((m) => ({
       id: `db-${m.id}`,
       message: m.text,
@@ -93,19 +86,16 @@ export function Chat({
       source: "db",
     }));
 
-    // ✅ Normalize LiveKit messages → UnifiedMessage
-    // m.from is a LiveKit Participant — we only need .identity (the display name).
-    // We never store the Participant object, so there's no type conflict.
     const normalizedLive: UnifiedMessage[] = liveMessages.map((m) => ({
       id: `lk-${m.id}`,
       message: m.message,
-      senderName: m.from?.identity ?? "Unknown",
+      // ✅ FIX: m.from?.name is the username set in createViewerToken
+      // m.from?.identity is the raw user ID — never use that for display
+      senderName: m.from?.name ?? m.from?.identity ?? viewerName,
       timestamp: m.timestamp,
       source: "livekit",
     }));
 
-    // Deduplicate: drop DB entries that already exist in LiveKit
-    // (same sender + same text + within 5 seconds = same message)
     const deduped: UnifiedMessage[] = [...normalizedLive];
     for (const dbMsg of normalizedDb) {
       const isDuplicate = normalizedLive.some(
@@ -120,7 +110,7 @@ export function Chat({
     }
 
     return deduped.sort((a, b) => b.timestamp - a.timestamp);
-  }, [dbMessages, liveMessages]);
+  }, [dbMessages, liveMessages, viewerName]);
 
   const onSubmit = async () => {
     if (!send || !value.trim()) return;
@@ -128,10 +118,8 @@ export function Chat({
     const messageToSend = value.trim();
     setValue("");
 
-    // Send via LiveKit
     send(messageToSend);
 
-    // Persist to DB
     await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

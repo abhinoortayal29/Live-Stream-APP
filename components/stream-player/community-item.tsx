@@ -3,6 +3,7 @@
 import React, { useTransition } from "react";
 import { toast } from "sonner";
 import { MinusCircle } from "lucide-react";
+import { useRouter } from "next/navigation"; // ← ADD
 
 import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export function CommunityItem({
   participantName?: string;
   participantIdentity: string;
 }) {
+  const router = useRouter(); // ← ADD
   const [isPending, startTransition] = useTransition();
 
   const color = stringToColor(participantName || "");
@@ -31,11 +33,12 @@ export function CommunityItem({
 
     startTransition(() => {
       onBlock(participantIdentity)
-        .then(() => toast.success(`Blocked ${participantName}`))
+        .then(() => {
+          toast.success(`Blocked ${participantName}`);
+          router.refresh(); // ← ADD: removes blocked user from community list
+        })
         .catch(() =>
-          toast.error(
-            `Failed to block ${participantName}, Something went wrong`
-          )
+          toast.error(`Failed to block ${participantName}, Something went wrong`)
         );
     });
   };

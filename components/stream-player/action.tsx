@@ -22,15 +22,15 @@ export function Actions({
 }) {
   const { userId } = useAuth();
   const router = useRouter();
-
   const [isPending, startTransition] = useTransition();
 
   const handleFollow = () => {
     startTransition(() => {
       onFollow(hostIdentity)
-        .then((data) =>
-          toast.success(`You are now following ${data.following.username}.`)
-        )
+        .then((data) => {
+          toast.success(`You are now following ${data.following.username}.`);
+          router.refresh(); // ← ADD: updates isFollowing prop from server
+        })
         .catch(() => toast.error("Something went wrong while following."));
     });
   };
@@ -38,9 +38,10 @@ export function Actions({
   const handleUnfollow = () => {
     startTransition(() => {
       onUnfollow(hostIdentity)
-        .then((data) =>
-          toast.success(`You have unfollowed ${data.following.username}.`)
-        )
+        .then((data) => {
+          toast.success(`You have unfollowed ${data.following.username}.`);
+          router.refresh(); // ← ADD: updates isFollowing prop from server
+        })
         .catch(() => toast.error("Something went wrong while unfollowing."));
     });
   };
