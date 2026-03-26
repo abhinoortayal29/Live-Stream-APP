@@ -68,14 +68,25 @@ export function Chat({
     }
   }, [matches, onExpand]);
 
+  // ✅ Fetch messages when stream comes online
+  // Clear messages immediately when stream goes offline —
+  // so stale chat from the previous session doesn't show on next stream
   useEffect(() => {
+    if (!isOnline) {
+      // Stream ended — clear local chat state instantly
+      setDbMessages([]);
+      return;
+    }
+
+    // Stream is live — fetch existing messages
     const fetchMessages = async () => {
       const res = await fetch(`/api/chat?hostIdentity=${hostIdentity}`);
       const data = await res.json();
       setDbMessages(Array.isArray(data) ? data : []);
     };
+
     fetchMessages();
-  }, [hostIdentity]);
+  }, [hostIdentity, isOnline]); // ← re-runs when isOnline changes
 
   const reversedMessages = useMemo((): UnifiedMessage[] => {
     const normalizedDb: UnifiedMessage[] = dbMessages.map((m) => ({
@@ -89,8 +100,6 @@ export function Chat({
     const normalizedLive: UnifiedMessage[] = liveMessages.map((m) => ({
       id: `lk-${m.id}`,
       message: m.message,
-      // ✅ FIX: m.from?.name is the username set in createViewerToken
-      // m.from?.identity is the raw user ID — never use that for display
       senderName: m.from?.name ?? m.from?.identity ?? viewerName,
       timestamp: m.timestamp,
       source: "livekit",
