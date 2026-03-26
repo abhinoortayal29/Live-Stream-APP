@@ -1,73 +1,75 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { useParticipants } from "@livekit/components-react";
-import { useDebounceValue } from "usehooks-ts";
-import { LocalParticipant, RemoteParticipant } from "livekit-client";
+import React, { useTransition } from "react";
+import { toast } from "sonner";
+import { MinusCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Hint } from "@/components/hint";
+import { Button } from "@/components/ui/button";
+import { onBlock } from "@/actions/block";
+import { cn, stringToColor } from "@/lib/utils";
 
-import { CommunityItem } from "./community-item";
-
-export function ChatCommunity({
+export function CommunityItem({
   hostName,
   viewerName,
-  isHidden,
+  participantName,
+  participantIdentity,
 }: {
   hostName: string;
   viewerName: string;
-  isHidden: boolean;
+  participantName?: string;
+  participantIdentity: string;
 }) {
-  const [value, setValue] = useState("");
-  const [debouncedValue] = useDebounceValue(value, 500);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const participants = useParticipants();
+  const color = stringToColor(participantName || "");
+  const isSelf = participantName === viewerName;
+  const isHost = viewerName === hostName;
 
-  const filteredParticipants = useMemo(() => {
-    const deduped = participants.reduce((acc, participant) => {
-      const hostAsViewr = `host-${participant.identity}`;
-      if (!acc.some((p) => p.identity === hostAsViewr)) {
-        acc.push(participant);
-      }
-      return acc;
-    }, [] as (RemoteParticipant | LocalParticipant)[]);
+  const handleBlock = () => {
+    if (!participantName || isSelf || !isHost) return;
 
-    return deduped.filter((participant) =>
-      participant.name?.toLowerCase().includes(debouncedValue.toLowerCase())
-    );
-  }, [debouncedValue, participants]);
+    // ✅ FIX: strip "host-" prefix if present
+    // LiveKit sets host identity as `host-${self.id}` in createViewerToken
+    // but blockUser expects the raw DB user id
+    const userId = participantIdentity.startsWith("host-")
+      ? participantIdentity.replace("host-", "")
+      : participantIdentity;
 
-  if (isHidden) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Community is disabled</p>
-      </div>
-    );
-  }
+    startTransition(() => {
+      onBlock(userId)
+        .then(() => {
+          toast.success(`Blocked ${participantName}`);
+          router.refresh();
+        })
+        .catch(() =>
+          toast.error(`Failed to block ${participantName}, Something went wrong`)
+        );
+    });
+  };
 
   return (
-    <div className="p-4">
-      <Input
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Search community"
-        className="border-white/10"
-      />
-      <ScrollArea className="gap-y-2 mt-4">
-        <p className="text-center text-sm text-muted-foreground hidden last:block">
-          No results
-        </p>
-        {filteredParticipants.map((participant) => (
-          <CommunityItem
-            key={participant.identity}
-            hostName={hostName}
-            viewerName={viewerName}
-            participantName={participant.name}
-            participantIdentity={participant.identity}
-          />
-        ))}
-      </ScrollArea>
+    <div
+      className={cn(
+        "group flex items-center justify-between w-full p-2 rounded-md text-sm hover:bg-white/5",
+        isPending && "opacity-50 pointer-events-none"
+      )}
+    >
+      <p style={{ color: color }}>{participantName}</p>
+      {isHost && !isSelf && (
+        <Hint label="Block" asChild>
+          <Button
+            variant="ghost"
+            disabled={isPending}
+            onClick={handleBlock}
+            className="h-auto w-auto p-1 opacity-0 group-hover:opacity-100 transition"
+          >
+            <MinusCircle className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </Hint>
+      )}
     </div>
   );
 }
-
