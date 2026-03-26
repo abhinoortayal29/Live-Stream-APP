@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
-import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,14 +20,8 @@ export default function RootLayout({
     <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <body className={inter.className}>
         <Providers>
-          <ThemeProvider
-            attribute="class"
-            forcedTheme="dark"
-            storageKey="gamehub-theme"
-          >
-            <Toaster theme="light" position="bottom-center"/>
-            {children}
-          </ThemeProvider>
+          <Toaster theme="light" position="bottom-center" />
+          {children}
         </Providers>
       </body>
     </html>

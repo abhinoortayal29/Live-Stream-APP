@@ -3,6 +3,7 @@
 import React, { useState, useTransition, useRef, ElementRef } from "react";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation"; // ← ADD THIS
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,13 +24,13 @@ import {
 } from "@/components/ui/select";
 import { createIngress } from "@/actions/ingress";
 
-// IngressInput enum values from livekit-server-sdk
-const RTMP = "0"; // IngressInput.RTMP_INPUT
-const WHIP = "1"; // IngressInput.WHIP_INPUT
+const RTMP = "0";
+const WHIP = "1";
 
 type IngressType = typeof RTMP | typeof WHIP;
 
 export function ConnectModal() {
+  const router = useRouter(); // ← ADD THIS
   const closeRef = useRef<ElementRef<"button">>(null);
   const [ingressType, setIngressType] = useState<IngressType>(RTMP);
   const [isPending, startTransition] = useTransition();
@@ -40,6 +41,7 @@ export function ConnectModal() {
         .then(() => {
           toast.success("Connection generated");
           closeRef?.current?.click();
+          router.refresh(); // ← ADD THIS — refetches server component with new keys
         })
         .catch(() => toast.error("Connection generation failed"));
     });

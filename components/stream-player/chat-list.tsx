@@ -1,18 +1,15 @@
 "use client";
 
 import React from "react";
-import { ReceivedChatMessage } from "@livekit/components-react";
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "./chat-message";
-
-
+import { UnifiedMessage } from "./chat"; // ← import our unified type
 
 export function ChatList({
   isHidden,
   messages,
 }: {
-  messages: ReceivedChatMessage[];
+  messages: UnifiedMessage[]; // ← was ReceivedChatMessage[]
   isHidden: boolean;
 }) {
   if (isHidden || !messages || messages.length === 0) {
@@ -28,7 +25,7 @@ export function ChatList({
   return (
     <div className="flex flex-1 flex-col-reverse overflow-y-auto p-3 h-full">
       {messages.map((message) => (
-        <ChatMessage key={message.timestamp} data={message} />
+        <ChatMessage key={message.id} data={message} />
       ))}
     </div>
   );
