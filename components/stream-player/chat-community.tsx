@@ -4,11 +4,14 @@ import React, { useTransition } from "react";
 import { toast } from "sonner";
 import { MinusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useParticipants } from "@livekit/components-react";
 
 import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
 import { onBlock } from "@/actions/block";
 import { cn, stringToColor } from "@/lib/utils";
+
+// ─── CommunityItem ───────────────────────────────────────────────────────────
 
 export function CommunityItem({
   hostName,
@@ -31,9 +34,6 @@ export function CommunityItem({
   const handleBlock = () => {
     if (!participantName || isSelf || !isHost) return;
 
-    // ✅ FIX: strip "host-" prefix if present
-    // LiveKit sets host identity as `host-${self.id}` in createViewerToken
-    // but blockUser expects the raw DB user id
     const userId = participantIdentity.startsWith("host-")
       ? participantIdentity.replace("host-", "")
       : participantIdentity;
@@ -70,6 +70,47 @@ export function CommunityItem({
           </Button>
         </Hint>
       )}
+    </div>
+  );
+}
+
+// ─── ChatCommunity ────────────────────────────────────────────────────────────
+
+export function ChatCommunity({
+  hostName,
+  viewerName,
+  isHidden,
+}: {
+  hostName: string;
+  viewerName: string;
+  isHidden: boolean;
+}) {
+  const participants = useParticipants();
+
+  if (isHidden) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Community is disabled</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 flex flex-col gap-y-4 flex-1 overflow-y-auto">
+      <p className="text-center text-sm text-muted-foreground">
+        {participants.length} watching
+      </p>
+      <div className="flex flex-col gap-y-2">
+        {participants.map((participant) => (
+          <CommunityItem
+            key={participant.identity}
+            hostName={hostName}
+            viewerName={viewerName}
+            participantName={participant.name}
+            participantIdentity={participant.identity}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -5,8 +5,6 @@ import React, { useState, useTransition, useRef, ElementRef } from "react";
 import { useRouter } from "next/navigation";
 import { Trash } from "lucide-react";
 import Image from "next/image";
-import type { OurFileRouter } from "@/app/api/uploadthing/core";
-import type { ClientUploadedFileData } from "uploadthing/types";
 
 import {
   Dialog,
@@ -41,7 +39,7 @@ export function InfoModal({
     startTransition(() => {
       updateStream({ thumbnailUrl: null })
         .then(() => {
-          toast.success("Stream thumbnail updated");
+          toast.success("Thumbnail removed");
           setThumbnailUrl(null);
           closeRef?.current?.click();
         })
@@ -51,9 +49,10 @@ export function InfoModal({
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+
+    // ✅ Only update name here — thumbnailUrl already saved in onUploadComplete
     startTransition(() => {
-      updateStream({ name, thumbnailUrl })
+      updateStream({ name })
         .then(() => {
           toast.success("Stream updated");
           router.refresh();
@@ -61,11 +60,6 @@ export function InfoModal({
         })
         .catch(() => toast.error("Something went wrong"));
     });
-  };
-  
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
   };
 
   return (
@@ -85,7 +79,7 @@ export function InfoModal({
             <Input
               disabled={isPending}
               placeholder="Stream name"
-              onChange={onChange}
+              onChange={(e) => setName(e.target.value)}
               value={name}
             />
           </div>
@@ -113,30 +107,30 @@ export function InfoModal({
                 />
               </div>
             ) : (
-                                    <div className="rounded-xl border outline-dashed outline-muted">
-                                                 <UploadDropzone
-                              endpoint="thumbnailUploader"
-                              appearance={{
-                                label: { color: "#FFFFFF" },
-                                allowedContent: { color: "#FFFFFF" },
-                              }}
-                              onUploadBegin={(fileName) => {
-                                console.log("Upload started:", fileName);
-                                toast.info("Uploading...");
-                              }}
-                              onClientUploadComplete={(res) => {
-                                console.log("Upload complete:", res);
-                                const url = res?.[0]?.url;
-                                if (!url) return;
-                                setThumbnailUrl(url);
-                                toast.success("Thumbnail uploaded!");
-                              }}
-                              onUploadError={(error: Error) => {
-                                console.error("Upload error:", error);
-                                toast.error(`Upload failed: ${error.message}`);
-                              }}
-                            />
+              <div className="rounded-xl border outline-dashed outline-muted">
+                <UploadDropzone
+                  endpoint="thumbnailUploader"
+                  appearance={{
+                    label: { color: "#FFFFFF" },
+                    allowedContent: { color: "#FFFFFF" },
+                  }}
+                  onUploadBegin={() => {
+                    toast.info("Uploading...");
+                  }}
+                  onClientUploadComplete={(res) => {
+                    const url = res?.[0]?.url;
+                    if (!url) return;
 
+                    // ✅ DB already updated server-side in onUploadComplete
+                    // Frontend just updates UI state
+                    setThumbnailUrl(url);
+                    toast.success("Thumbnail uploaded!");
+                    router.refresh(); // ✅ refresh to reflect new thumbnail everywhere
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast.error(`Upload failed: ${error.message}`);
+                  }}
+                />
               </div>
             )}
           </div>

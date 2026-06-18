@@ -50,7 +50,7 @@ export const createViewerToken = async (hostIdentity: string) => {
     room: host.id,
     roomJoin: true,
     canPublish: false,
-    //canPublishData  Can send chat/messages ✅
+   
     canPublishData: true,
   });
 

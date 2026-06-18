@@ -3,8 +3,6 @@ import { Metadata } from "next";
 import { Results,ResultsSkeleton } from "./_components/result";
 
 
-
-
 export const metadata: Metadata = {
   title: "Home",
 };

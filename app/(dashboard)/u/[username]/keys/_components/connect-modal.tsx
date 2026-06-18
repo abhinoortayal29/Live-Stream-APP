@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useRef, ElementRef } from "react";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation"; // ← ADD THIS
+import { useRouter } from "next/navigation"; 
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,8 +41,8 @@ export function ConnectModal() {
         .then(() => {
           toast.success("Connection generated");
           closeRef?.current?.click();
-          router.refresh(); // ← ADD THIS — refetches server component with new keys
-        })
+          router.refresh();
+        }) 
         .catch(() => toast.error("Connection generation failed"));
     });
   };

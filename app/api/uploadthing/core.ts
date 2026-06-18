@@ -14,18 +14,23 @@ export const ourFileRouter = {
   })
     .middleware(async () => {
       const self = await getSelf();
-      
+
       if (!self) {
         throw new Error("Unauthorized");
       }
-      
-      return { user: self };
+
+      // ✅ Pass userId to onUploadComplete via metadata
+      return { userId: self.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      
+      // ✅ DB save now happens SERVER-SIDE — guaranteed even if frontend crashes
+      await db.stream.update({
+        where: { userId: metadata.userId },
+        data: { thumbnailUrl: file.url },
+      });
+
       return { url: file.url };
     }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
-// chexk log in or not then return url 
