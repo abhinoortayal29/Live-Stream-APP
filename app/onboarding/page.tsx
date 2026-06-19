@@ -30,47 +30,48 @@ export default function OnboardingPage() {
   }, [username]);
 
   return (
-    <div className="max-w-md mx-auto py-20">
-      <h1 className="text-2xl font-bold mb-4">
-        Choose your unique username
-      </h1>
+              <div className="max-w-md mx-auto py-20">
+                <h1 className="text-2xl font-bold mb-4">
+                  Choose your unique username
+                </h1>
 
-      {/* ✅ SERVER ACTION FORM */}
-      <form action={setUsername} className="flex flex-col gap-4">
-        <input
-          name="username"
-          value={username}
-          onChange={(e) =>
-            setUsernameValue(e.target.value.toLowerCase())
-          }
-          placeholder="username"
-          className="border p-2 rounded"
-          required
-        />
+                {/* ✅ SERVER ACTION FORM */}
+                <form
+            action={setUsername}
+            onSubmit={(e) => {
+              if (available !== true) e.preventDefault();
+            }}
+            className="flex flex-col gap-4"
+          >
+            <input
+              name="username"
+              value={username}
+              onChange={(e) => setUsernameValue(e.target.value.toLowerCase())}
+              placeholder="username"
+              className="border p-2 rounded"
+              required
+            />
 
-        {username.length >= 3 && (
-          <p className="text-sm">
-            {checking && "Checking..."}
-            {!checking && available === true && (
-              <span className="text-green-500">
-                ✓ Username available
-              </span>
+            {username.length >= 3 && (
+              <p className="text-sm">
+                {checking && "Checking..."}
+                {!checking && available === true && (
+                  <span className="text-green-500">✓ Username available</span>
+                )}
+                {!checking && available === false && (
+                  <span className="text-red-500">Username already taken</span>
+                )}
+              </p>
             )}
-            {!checking && available === false && (
-              <span className="text-red-500">
-                Username already taken
-              </span>
-            )}
-          </p>
-        )}
 
-        <button
-          type="submit"
-          disabled={!available}
-          className="bg-black text-white p-2 rounded disabled:opacity-50">
-          Continue
-        </button>
-      </form>
+            <button
+              type="submit"
+              disabled={available !== true || checking}
+              className="bg-black text-white p-2 rounded disabled:opacity-50"
+            >
+              Continue
+            </button>
+</form>
     </div>
   );
 }
