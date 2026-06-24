@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
@@ -15,12 +16,20 @@ import { ChatForm, ChatFormSkeleton } from "./chat-form";
 import { ChatList, ChatListSkeleton } from "./chat-list";
 import { ChatCommunity } from "./chat-community";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface DbMessage {
   id: string;
   text: string;
   userName: string;
   streamId: string;
   createdAt: string;
+}
+
+// NEW: shape returned by the cursor-paginated API
+interface ChatApiResponse {
+  messages: DbMessage[];
+  nextCursor: string | null; // ISO timestamp of oldest message, or null if no more
 }
 
 export interface UnifiedMessage {
@@ -30,6 +39,8 @@ export interface UnifiedMessage {
   timestamp: number;
   source: "db" | "livekit";
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function Chat({
   hostName,
@@ -58,88 +69,101 @@ export function Chat({
 
   const [value, setValue] = useState("");
   const [dbMessages, setDbMessages] = useState<DbMessage[]>([]);
-  const [page, setPage] = useState(1);
-  const [isFetching, setIsFetching] = useState(false);
+
+  // ── CURSOR PAGINATION STATE (replaces `page`) ──────────────────────────────
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  // ──────────────────────────────────────────────────────────────────────────
 
   const { chatMessages: liveMessages, send } = useChat();
-
-  // Ref to the scroll container — passed down to ChatList
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (matches) onExpand();
   }, [matches, onExpand]);
 
- // In fetchMessages inside chat.tsx
-const fetchMessages = useCallback(
-  async (pageNum: number) => {
-    if (!isOnline || isFetching || !hasMore) return;
+  // ── fetchMessages: cursor-based ──────────────────────────────────────────
+  // `cursor` = ISO timestamp to fetch messages OLDER than this point.
+  // Pass `null` for the first/fresh fetch (no cursor = get latest messages).
+  const fetchMessages = useCallback(
+    async (cursor: string | null) => {
+      if (!isOnline || isFetching || !hasMore) return;
 
-    setIsFetching(true);
+      setIsFetching(true);
 
-    try {
-      const res = await fetch(
-        `/api/chat?hostIdentity=${hostIdentity}&page=${pageNum}&limit=50`
-      );
+      try {
+        // Build URL — omit cursor param entirely on first fetch
+        const url = cursor
+          ? `/api/chat?hostIdentity=${hostIdentity}&cursor=${encodeURIComponent(cursor)}&limit=50`
+          : `/api/chat?hostIdentity=${hostIdentity}&limit=50`;
 
-      // ✅ Check content-type before parsing
-      const contentType = res.headers.get("content-type");
-      if (!res.ok || !contentType?.includes("application/json")) {
-        console.error("FETCH_MESSAGES: non-JSON response", res.status, await res.text());
-        setHasMore(false);
-        return;
+        const res = await fetch(url);
+
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType?.includes("application/json")) {
+          console.error("FETCH_MESSAGES: non-JSON response", res.status, await res.text());
+          setHasMore(false);
+          return;
+        }
+
+        const data: ChatApiResponse = await res.json();
+
+        if (!Array.isArray(data.messages) || data.messages.length === 0) {
+          setHasMore(false);
+          setNextCursor(null);
+          return;
+        }
+
+        // Preserve scroll position before appending older messages
+        const el = scrollRef.current;
+        const prevScrollHeight = el?.scrollHeight ?? 0;
+        const prevScrollTop = el?.scrollTop ?? 0;
+
+        setDbMessages((prev) =>
+          // null cursor = fresh load, replace all; otherwise append older messages
+          cursor === null ? data.messages : [...prev, ...data.messages]
+        );
+
+        // Restore scroll position after DOM updates (only when loading more)
+        if (cursor !== null && el) {
+          requestAnimationFrame(() => {
+            const newScrollHeight = el.scrollHeight;
+            el.scrollTop = prevScrollTop - (newScrollHeight - prevScrollHeight);
+          });
+        }
+
+        // Update cursor state for next load
+        setNextCursor(data.nextCursor);
+        setHasMore(data.nextCursor !== null);
+      } catch (err) {
+        console.error("FETCH_MESSAGES_ERROR", err);
+      } finally {
+        setIsFetching(false);
       }
+    },
+    [hostIdentity, isOnline, isFetching, hasMore]
+  );
 
-      const data: DbMessage[] = await res.json();
-
-      if (!Array.isArray(data) || data.length === 0) {
-        setHasMore(false);
-        return;
-      }
-
-      if (data.length < 50) setHasMore(false);
-
-      const el = scrollRef.current;
-      const prevScrollHeight = el?.scrollHeight ?? 0;
-      const prevScrollTop = el?.scrollTop ?? 0;
-
-      setDbMessages((prev) =>
-        pageNum === 1 ? data : [...prev, ...data]
-      );
-
-      if (pageNum > 1 && el) {
-        requestAnimationFrame(() => {
-          const newScrollHeight = el.scrollHeight;
-          el.scrollTop = prevScrollTop - (newScrollHeight - prevScrollHeight);
-        });
-      }
-    } catch (err) {
-      console.error("FETCH_MESSAGES_ERROR", err);
-    } finally {
-      setIsFetching(false);
-    }
-  },
-  [hostIdentity, isOnline, isFetching, hasMore]
-);
-
-  // Initial fetch when stream comes online
+  // Initial fetch when stream comes online — reset all cursor state
   useEffect(() => {
     if (!isOnline) return;
-    setPage(1);
-    setHasMore(true);
+
     setDbMessages([]);
-    fetchMessages(1);
+    setNextCursor(null);
+    setHasMore(true);
+    fetchMessages(null); // null = first page, no cursor
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, hostIdentity]);
 
+  // loadMore: pass the current nextCursor to fetch the next older page
   const loadMore = useCallback(() => {
-    if (isFetching || !hasMore) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchMessages(nextPage);
-  }, [isFetching, hasMore, page, fetchMessages]);
+    if (isFetching || !hasMore || nextCursor === null) return;
+    fetchMessages(nextCursor);
+  }, [isFetching, hasMore, nextCursor, fetchMessages]);
 
+  // ── Message normalization + deduplication (unchanged) ─────────────────────
   const reversedMessages = useMemo((): UnifiedMessage[] => {
     const normalizedDb: UnifiedMessage[] = dbMessages.map((m) => ({
       id: `db-${m.id}`,
@@ -157,7 +181,6 @@ const fetchMessages = useCallback(
       source: "livekit",
     }));
 
-    // Deduplicate: LiveKit is source of truth for recent messages
     const deduped: UnifiedMessage[] = [...normalizedLive];
     for (const dbMsg of normalizedDb) {
       const isDuplicate = normalizedLive.some(
@@ -169,10 +192,10 @@ const fetchMessages = useCallback(
       if (!isDuplicate) deduped.push(dbMsg);
     }
 
-    // Newest first (flex-col-reverse will flip this visually to newest at bottom)
     return deduped.sort((a, b) => b.timestamp - a.timestamp);
   }, [dbMessages, liveMessages, viewerName]);
 
+  // ── Submit (unchanged) ────────────────────────────────────────────────────
   const onSubmit = async () => {
     if (!send || !value.trim()) return;
 
@@ -199,6 +222,7 @@ const fetchMessages = useCallback(
 
   const onChange = (value: string) => setValue(value);
 
+  // ── Render (unchanged) ────────────────────────────────────────────────────
   return (
     <div className="flex flex-col bg-background border-l border-b pt-0 h-[calc(100vh-80px)]">
       <ChatHeader />

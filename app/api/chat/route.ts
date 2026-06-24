@@ -1,3 +1,4 @@
+// app/api/chat/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -46,9 +47,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
 
     const hostIdentity = searchParams.get("hostIdentity");
-    const page = Math.max(1, Number(searchParams.get("page") || "1"));
+    const cursorParam = searchParams.get("cursor"); // ISO timestamp or null
     const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") || "50")));
-    const skip = (page - 1) * limit;
 
     if (!hostIdentity) {
       return NextResponse.json({ error: "Missing hostIdentity" }, { status: 400 });
@@ -62,14 +62,33 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Stream not found" }, { status: 404 });
     }
 
+    // Fetch limit + 1 — the extra record tells us whether more pages exist
+    // without a separate COUNT query
     const messages = await db.message.findMany({
-      where: { streamId: stream.id },
+      where: {
+        streamId: stream.id,
+        // If cursor provided, fetch only messages OLDER than that timestamp
+        ...(cursorParam
+          ? { createdAt: { lt: new Date(cursorParam) } }
+          : {}),
+      },
       orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
+      take: limit + 1,
     });
 
-    return NextResponse.json(messages);
+    const hasMore = messages.length > limit;
+
+    // Trim the extra record — it was only used to detect hasMore
+    const pageMessages = hasMore ? messages.slice(0, limit) : messages;
+
+    // nextCursor = createdAt of the OLDEST message in this batch
+    // The next request will fetch everything older than this point
+    const nextCursor =
+      hasMore && pageMessages.length > 0
+        ? pageMessages[pageMessages.length - 1].createdAt.toISOString()
+        : null;
+
+    return NextResponse.json({ messages: pageMessages, nextCursor });
   } catch (error) {
     console.log("CHAT_GET_ERROR", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

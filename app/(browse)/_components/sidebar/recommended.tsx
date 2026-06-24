@@ -14,9 +14,6 @@ export function Recommended({
 }) {
   const { collapsed } = useSidebar((state) => state);
 
-  // 🔥 DEBUG: check component + data
-  console.log("Recommended rendered");
-  console.log("DATA:", data);
 
   const showLabel = !collapsed && data.length > 0;
 
@@ -30,8 +27,8 @@ export function Recommended({
 
       <ul className="space-y-2 px-2">
         {data.map((user) => {
-          // 🔥 DEBUG: each user
-          console.log("USER:", user.username, user.stream);
+        
+        
 
           return (
             <UserItem

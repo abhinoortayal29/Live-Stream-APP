@@ -49,7 +49,7 @@ export const isFollowingUser = async (id: string) => {
     });
 
     if (!otherUser) throw new Error("User not found");
-    // for hiding button follow
+
     if (otherUser.id === self.id) return true;
 
     const existingFollow = await db.follow.findFirst({

@@ -30,7 +30,7 @@ export const Wrapper = ({ children }: WrapperProps) => {
   return (
     <aside
       className={cn(
-        // sidebar starts BELOW navbar:
+       
         "fixed left-0 top-16 h-[calc(100%-4rem)] bg-background border-r border-[#2D2E35] z-40 flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]"
       )}

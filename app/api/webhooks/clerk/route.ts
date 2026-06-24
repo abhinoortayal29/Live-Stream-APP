@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const eventType = evt.type;
     const payload = evt.data as Record<string, any>;
 
-    console.log(`Received webhook: type=${eventType}, id=${payload?.id}`);
+    
 
     // Handle user.created
     if (eventType === "user.created") {

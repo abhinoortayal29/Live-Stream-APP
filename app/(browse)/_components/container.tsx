@@ -21,7 +21,7 @@ export const Container = ({ children }: ContainerProps) => {
   return (
     <main
       className={cn(
-        "transition-all duration-300 ease-in-out min-h-screen w-full pt-16 bg-[#1a1b20]", // pt-16 ensures content starts below navbar
+        "transition-all duration-300 ease-in-out min-h-screen w-full pt-16 bg-[#1a1b20]", 
         collapsed ? "ml-[70px]" : "ml-[240px]"
       )}
     >
